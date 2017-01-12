@@ -56,6 +56,7 @@ DEFINE_int32(camera,                0,              "The camera index for VideoC
 DEFINE_string(video,                "",             "Use a video file instead of the camera.");
 DEFINE_string(image_dir,            "",             "Process a directory of images.");
 DEFINE_int32(start_frame,           0,              "Skip to frame # of video");
+DEFINE_int32(end_frame,           -1,              "Skip to frame # of video");
 DEFINE_string(caffemodel, "model/coco/pose_iter_440000.caffemodel", "Caffe model.");
 DEFINE_string(caffeproto, "model/coco/pose_deploy_linevec.prototxt", "Caffe deploy prototxt.");
 // DEFINE_string(caffemodel, "model/mpi/pose_iter_160000.caffemodel", "Caffe model.");
@@ -521,8 +522,13 @@ void* getFrameFromCam(void *i) {
         global.input_queue.push(frame);
 
         // If we reach the end of a video, loop
-        if (!FLAGS_video.empty() && frame_counter >= cap.get(CV_CAP_PROP_FRAME_COUNT)) {
-            if (!FLAGS_write_frames.empty()) {
+        bool after_end_frame =
+            FLAGS_end_frame == -1 ? false : frame_counter >= FLAGS_end_frame;
+        if (!FLAGS_video.empty() &&
+            (after_end_frame ||
+             frame_counter >= cap.get(CV_CAP_PROP_FRAME_COUNT))) {
+          //if (true || !FLAGS_write_frames.empty()) {
+          if (true) {
                 LOG(INFO) << "Done, exiting. # frames: " << frame_counter;
                 // This is the last frame (also the last emmitted frame)
                 // Wait until the queues are clear before exiting
@@ -1440,11 +1446,11 @@ void* displayFrame(void *i) { //single thread
         delete [] frame.data;
 
         //LOG(ERROR) << msg;
-        int key = cv::waitKey(1);
-        if (!handleKey(key)) {
+        //int key = cv::waitKey(1);
+        //if (!handleKey(key)) {
             // TODO: sync issues?
-            break;
-        }
+        //    break;
+        //}
 
         VLOG(2) << "Display time " << (get_wall_time()-tic)*1000.0 << " ms.";
     }
